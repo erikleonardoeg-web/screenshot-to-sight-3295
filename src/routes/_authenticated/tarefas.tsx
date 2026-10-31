@@ -29,7 +29,7 @@ function TasksPage() {
                 <p className="font-medium">{t.title}</p>
                 <p className="text-xs text-muted-foreground">{t.type} · {t.owner} · {new Date(t.due.replace(" ", "T")).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</p>
               </div>
-              <StatusBadge status={t.status} label={LABEL[t.status]} />
+              <StatusBadge status={t.status} label={LABEL[t.status] ?? t.status} />
             </li>
           );
         })}

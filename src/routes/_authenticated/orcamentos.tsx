@@ -32,7 +32,7 @@ function BudgetsPage() {
                 <TableCell className="max-w-xs truncate text-muted-foreground">{b.service}</TableCell>
                 <TableCell className="text-right font-medium">{brl(b.amount)}</TableCell>
                 <TableCell>{dateBR(b.date)}</TableCell>
-                <TableCell><StatusBadge status={b.status} label={LABEL[b.status]} /></TableCell>
+                <TableCell><StatusBadge status={b.status} label={LABEL[b.status] ?? b.status} /></TableCell>
                 <TableCell>{b.owner}</TableCell>
               </TableRow>
             ))}
