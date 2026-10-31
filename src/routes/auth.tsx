@@ -32,7 +32,7 @@ function LoginPage() {
       password: String(f.get("password")),
     });
     setLoading(false);
-    if (error) return toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message);
+    if (error) { toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : error.message); return; }
     navigate({ to: "/dashboard" });
   }
 

@@ -29,7 +29,7 @@ function SettingsPage() {
     const { error } = await supabase.from("organizations").update({
       name: String(f.get("name")), phone: String(f.get("phone")) || null, document: String(f.get("document")) || null,
     }).eq("id", org.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Dados da empresa salvos.");
     qc.invalidateQueries({ queryKey: currentOrgQuery.queryKey });
   }
@@ -38,7 +38,7 @@ function SettingsPage() {
     e.preventDefault();
     if (!data) return;
     const { error } = await supabase.from("profiles").update({ full_name: String(new FormData(e.currentTarget).get("full_name")) }).eq("id", data.user.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Perfil atualizado.");
     qc.invalidateQueries({ queryKey: currentOrgQuery.queryKey });
   }
