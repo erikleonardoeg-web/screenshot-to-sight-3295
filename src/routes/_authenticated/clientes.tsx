@@ -10,8 +10,8 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 });
 
 function ClientsPage() {
-  const [sel, setSel] = useState(demoClients[0].id);
-  const c = demoClients.find((x) => x.id === sel)!;
+  const [sel, setSel] = useState(demoClients[0]?.id ?? "");
+  const c = demoClients.find((x) => x.id === sel) ?? demoClients[0]!;
   return (
     <>
       <PageHeader title="Clientes" description="Leads convertidos e seu histórico comercial." />
