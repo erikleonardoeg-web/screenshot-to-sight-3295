@@ -1,0 +1,95 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { type FormEvent } from "react";
+import { toast } from "sonner";
+import { PageHeader, Panel } from "@/components/app/common";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { currentOrgQuery, useCurrentOrg } from "@/hooks/use-organization";
+import { PLANS, TRIAL_DAYS, formatPlanPrice } from "@/lib/plans";
+
+export const Route = createFileRoute("/_authenticated/configuracoes")({
+  head: () => ({ meta: [{ title: "Configurações — LeadZap" }, { name: "description", content: "Dados da empresa, perfil e conta." }] }),
+  component: SettingsPage,
+});
+
+function SettingsPage() {
+  const { data } = useCurrentOrg();
+  const qc = useQueryClient();
+  const org = data?.organization;
+  const isAdmin = data?.role === "owner" || data?.role === "admin";
+
+  async function saveOrg(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!org) return;
+    const f = new FormData(e.currentTarget);
+    const { error } = await supabase.from("organizations").update({
+      name: String(f.get("name")), phone: String(f.get("phone")) || null, document: String(f.get("document")) || null,
+    }).eq("id", org.id);
+    if (error) return toast.error(error.message);
+    toast.success("Dados da empresa salvos.");
+    qc.invalidateQueries({ queryKey: currentOrgQuery.queryKey });
+  }
+
+  async function saveProfile(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!data) return;
+    const { error } = await supabase.from("profiles").update({ full_name: String(new FormData(e.currentTarget).get("full_name")) }).eq("id", data.user.id);
+    if (error) return toast.error(error.message);
+    toast.success("Perfil atualizado.");
+    qc.invalidateQueries({ queryKey: currentOrgQuery.queryKey });
+  }
+
+  if (!data) return null;
+  return (
+    <>
+      <PageHeader title="Configurações" description="Empresa, perfil, preferências e conta." />
+      <Tabs defaultValue="empresa">
+        <TabsList className="mb-4 flex-wrap">
+          <TabsTrigger value="empresa">Empresa</TabsTrigger>
+          <TabsTrigger value="perfil">Perfil</TabsTrigger>
+          <TabsTrigger value="preferencias">Preferências</TabsTrigger>
+          <TabsTrigger value="conta">Conta</TabsTrigger>
+        </TabsList>
+        <TabsContent value="empresa">
+          <Panel title="Dados da empresa">
+            <form key={org?.id} onSubmit={saveOrg} className="grid max-w-xl gap-4">
+              <div className="space-y-1.5"><Label htmlFor="name">Nome da empresa</Label><Input id="name" name="name" defaultValue={org?.name} required disabled={!isAdmin} /></div>
+              <div className="space-y-1.5"><Label htmlFor="phone">Telefone / WhatsApp</Label><Input id="phone" name="phone" defaultValue={org?.phone ?? ""} disabled={!isAdmin} /></div>
+              <div className="space-y-1.5"><Label htmlFor="document">CNPJ / CPF</Label><Input id="document" name="document" defaultValue={org?.document ?? ""} disabled={!isAdmin} /></div>
+              {isAdmin && <Button type="submit" className="w-fit">Salvar</Button>}
+            </form>
+          </Panel>
+        </TabsContent>
+        <TabsContent value="perfil">
+          <Panel title="Seu perfil">
+            <form onSubmit={saveProfile} className="grid max-w-xl gap-4">
+              <div className="space-y-1.5"><Label htmlFor="full_name">Nome completo</Label><Input id="full_name" name="full_name" defaultValue={data.profile?.full_name ?? ""} /></div>
+              <div className="space-y-1.5"><Label>E-mail</Label><Input value={data.user.email ?? ""} disabled /></div>
+              <Button type="submit" className="w-fit">Salvar</Button>
+            </form>
+          </Panel>
+        </TabsContent>
+        <TabsContent value="preferencias">
+          <Panel title="Preferências"><p className="text-sm text-muted-foreground">Notificações, idioma e fuso horário serão configuráveis na próxima fase.</p></Panel>
+        </TabsContent>
+        <TabsContent value="conta">
+          <Panel title="Assinatura">
+            <p className="mb-4 text-sm text-muted-foreground">Teste grátis de {TRIAL_DAYS} dias. A contratação de planos ficará disponível em breve.</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PLANS.map((p) => (
+                <div key={p.id} className="rounded-lg border p-4">
+                  <p className="font-semibold">{p.name}</p>
+                  <p className="text-sm text-muted-foreground">{formatPlanPrice(p.priceCents)}/mês</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+}
