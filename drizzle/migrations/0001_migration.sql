@@ -1,0 +1,1 @@
+alter table public.leads add column estimated_value numeric(12,2);
