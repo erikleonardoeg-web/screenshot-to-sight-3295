@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { type FormEvent } from "react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
+import { CreditCard, Users } from "lucide-react";
 import { PageHeader, Panel } from "@/components/app/common";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,8 +54,9 @@ function SettingsPage() {
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="empresa">Empresa</TabsTrigger>
           <TabsTrigger value="perfil">Perfil</TabsTrigger>
+          <TabsTrigger value="equipe">Equipe</TabsTrigger>
           <TabsTrigger value="preferencias">Preferências</TabsTrigger>
-          <TabsTrigger value="conta">Conta</TabsTrigger>
+          <TabsTrigger value="conta">Assinatura e plano</TabsTrigger>
         </TabsList>
         <TabsContent value="empresa">
           <Panel title="Dados da empresa">
@@ -73,17 +77,28 @@ function SettingsPage() {
             </form>
           </Panel>
         </TabsContent>
+        <TabsContent value="equipe">
+          <Panel title="Gerenciamento de equipe">
+            <p className="mb-4 text-sm text-muted-foreground">Veja funcionários, altere cargos e ative ou desative acessos.</p>
+            <Button variant="outline" asChild><Link to="/equipe"><Users /> Abrir equipe</Link></Button>
+          </Panel>
+        </TabsContent>
         <TabsContent value="preferencias">
           <Panel title="Preferências"><p className="text-sm text-muted-foreground">Notificações, idioma e fuso horário serão configuráveis na próxima fase.</p></Panel>
         </TabsContent>
         <TabsContent value="conta">
-          <Panel title="Assinatura">
-            <p className="mb-4 text-sm text-muted-foreground">Teste grátis de {TRIAL_DAYS} dias. A contratação de planos ficará disponível em breve.</p>
+          <Panel title="Assinatura e plano" action={<Badge variant="outline">Em breve</Badge>}>
+            <div className="mb-4 flex items-start gap-3 rounded-lg bg-muted p-4 text-sm">
+              <CreditCard className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <p className="text-muted-foreground">Teste grátis de {TRIAL_DAYS} dias. A contratação será feita por checkout seguro da Cakto, disponível em breve. Nenhuma cobrança é feita agora.</p>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {PLANS.map((p) => (
                 <div key={p.id} className="rounded-lg border p-4">
                   <p className="font-semibold">{p.name}</p>
                   <p className="text-sm text-muted-foreground">{formatPlanPrice(p.priceCents)}/mês</p>
+                  <ul className="mt-3 space-y-1 text-xs text-muted-foreground">{p.features.map((f) => <li key={f}>• {f}</li>)}</ul>
+                  <Button className="mt-4 w-full" variant={p.id === "pro" ? "default" : "outline"} disabled>Assinar {p.name}</Button>
                 </div>
               ))}
             </div>
