@@ -29,7 +29,7 @@ const ROLE_STYLE: Record<Member["role"], { icon: typeof Crown; cls: string }> = 
   member: { icon: UserRound, cls: "bg-muted text-muted-foreground" },
 };
 
-export function RoleBadge({ role }: { role: Member["role"] }) {
+function RoleBadge({ role }: { role: Member["role"] }) {
   const { icon: Icon, cls } = ROLE_STYLE[role];
   return <Badge variant="outline" className={cn("gap-1 font-medium", cls)}><Icon className="size-3" />{ROLE_LABEL[role]}</Badge>;
 }
