@@ -1,12 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { DemoNotice, PageHeader, StatusBadge } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { brl, dateBR, demoBudgets } from "@/lib/demo-data";
 
 const LABEL: Record<string, string> = { rascunho: "Rascunho", enviado: "Enviado", aprovado: "Aprovado", recusado: "Recusado" };
+type Budget = (typeof demoBudgets)[number];
 
 export const Route = createFileRoute("/_authenticated/orcamentos")({
   head: () => ({ meta: [{ title: "Orçamentos — LeadZap" }, { name: "description", content: "Orçamentos enviados aos clientes." }] }),
@@ -14,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/orcamentos")({
 });
 
 function BudgetsPage() {
+  const [sel, setSel] = useState<Budget | null>(null);
   return (
     <>
       <PageHeader title="Orçamentos" description="Propostas enviadas e seus status."
@@ -27,7 +31,7 @@ function BudgetsPage() {
           </TableRow></TableHeader>
           <TableBody>
             {demoBudgets.map((b) => (
-              <TableRow key={b.id}>
+              <TableRow key={b.id} className="cursor-pointer" onClick={() => setSel(b)}>
                 <TableCell className="font-medium">{b.customer}</TableCell>
                 <TableCell className="max-w-xs truncate text-muted-foreground">{b.service}</TableCell>
                 <TableCell className="text-right font-medium">{brl(b.amount)}</TableCell>
@@ -39,6 +43,23 @@ function BudgetsPage() {
           </TableBody>
         </Table>
       </div>
+      <Dialog open={!!sel} onOpenChange={(o) => !o && setSel(null)}>
+        <DialogContent>
+          {sel && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Orçamento — {sel.customer}</DialogTitle>
+                <DialogDescription>{dateBR(sel.date)} · Responsável: {sel.owner}</DialogDescription>
+              </DialogHeader>
+              <p className="text-sm">{sel.service}</p>
+              <div className="flex items-center justify-between rounded-lg bg-muted p-4">
+                <span className="text-2xl font-semibold">{brl(sel.amount)}</span>
+                <StatusBadge status={sel.status} label={LABEL[sel.status] ?? sel.status} />
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

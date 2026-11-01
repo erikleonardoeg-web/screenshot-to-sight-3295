@@ -60,9 +60,9 @@ export const demoTasks = [
 ] as const;
 
 export const demoClients = [
-  { id: "1", name: "Padaria Bom Dia", phone: "(11) 95544-7788", email: "contato@exemplo.com", since: "2026-10-20", total: 2300, history: ["Revisão elétrica completa — R$ 2.300", "Primeiro contato via WhatsApp"] },
-  { id: "2", name: "Auto Center Rápido", phone: "(11) 94411-2200", email: "auto@exemplo.com", since: "2026-08-14", total: 7150, history: ["Instalação elétrica oficina — R$ 4.900", "Manutenção trimestral — R$ 2.250"] },
-  { id: "3", name: "Escola Aprender", phone: "(11) 3111-4455", email: "escola@exemplo.com", since: "2026-06-02", total: 12800, history: ["Climatização de 6 salas — R$ 12.800"] },
+  { id: "1", name: "Padaria Bom Dia", phone: "(11) 95544-7788", email: "contato@exemplo.com", since: "2026-10-20", owner: "Carlos", total: 2300, history: ["Revisão elétrica completa — R$ 2.300", "Primeiro contato via WhatsApp"] },
+  { id: "2", name: "Auto Center Rápido", phone: "(11) 94411-2200", email: "auto@exemplo.com", since: "2026-08-14", owner: "Ana", total: 7150, history: ["Instalação elétrica oficina — R$ 4.900", "Manutenção trimestral — R$ 2.250"] },
+  { id: "3", name: "Escola Aprender", phone: "(11) 3111-4455", email: "escola@exemplo.com", since: "2026-06-02", owner: "Carlos", total: 12800, history: ["Climatização de 6 salas — R$ 12.800"] },
 ];
 
 export const demoActivities = [
