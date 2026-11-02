@@ -3,7 +3,7 @@ import { useState } from "react";
 import { DemoNotice, PageHeader } from "@/components/app/common";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { brl, dateBR, demoClients } from "@/lib/demo-data";
+import { brl, dateBR, demoClients } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
   head: () => ({ meta: [{ title: "Clientes — LeadZap" }, { name: "description", content: "Clientes convertidos e histórico." }] }),

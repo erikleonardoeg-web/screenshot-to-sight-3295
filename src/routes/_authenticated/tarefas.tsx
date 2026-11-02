@@ -3,7 +3,7 @@ import { Bell, CalendarClock, Phone, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { DemoNotice, PageHeader, StatusBadge } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
-import { demoTasks } from "@/lib/demo-data";
+import { demoTasks } from "@/lib/format";
 
 const LABEL: Record<string, string> = { pendente: "Pendente", em_andamento: "Em andamento", concluida: "Concluída" };
 const ICON = { Lembrete: Bell, "Próximo contato": Phone, Prazo: CalendarClock } as const;

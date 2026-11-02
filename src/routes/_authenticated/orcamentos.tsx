@@ -6,7 +6,7 @@ import { DemoNotice, PageHeader, StatusBadge } from "@/components/app/common";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { brl, dateBR, demoBudgets } from "@/lib/demo-data";
+import { brl, dateBR, demoBudgets } from "@/lib/format";
 
 const LABEL: Record<string, string> = { rascunho: "Rascunho", enviado: "Enviado", aprovado: "Aprovado", recusado: "Recusado" };
 type Budget = (typeof demoBudgets)[number];

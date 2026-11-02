@@ -3,7 +3,7 @@ import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { CheckCircle2, FileText, Percent, UserPlus, UsersRound } from "lucide-react";
 import { DemoNotice, PageHeader, Panel, StatCard, StatusBadge } from "@/components/app/common";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { demoActivities, demoLeads, demoTasks, dateBR, stageName } from "@/lib/demo-data";
+import { demoActivities, demoLeads, demoTasks, dateBR, stageName } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — LeadZap" }, { name: "description", content: "Visão geral dos seus leads e vendas." }] }),
