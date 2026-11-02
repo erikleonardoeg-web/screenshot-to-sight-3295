@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json
+          organization_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json
+          organization_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budgets: {
         Row: {
           amount: number
@@ -21,13 +62,16 @@ export type Database = {
           budget_date: string
           client_id: string | null
           created_at: string
+          created_by: string | null
           customer_name: string
           description: string | null
           id: string
           lead_id: string | null
           organization_id: string
           status: Database["public"]["Enums"]["budget_status"]
+          title: string | null
           updated_at: string
+          valid_until: string | null
         }
         Insert: {
           amount?: number
@@ -35,13 +79,16 @@ export type Database = {
           budget_date?: string
           client_id?: string | null
           created_at?: string
+          created_by?: string | null
           customer_name: string
           description?: string | null
           id?: string
           lead_id?: string | null
           organization_id: string
           status?: Database["public"]["Enums"]["budget_status"]
+          title?: string | null
           updated_at?: string
+          valid_until?: string | null
         }
         Update: {
           amount?: number
@@ -49,13 +96,16 @@ export type Database = {
           budget_date?: string
           client_id?: string | null
           created_at?: string
+          created_by?: string | null
           customer_name?: string
           description?: string | null
           id?: string
           lead_id?: string | null
           organization_id?: string
           status?: Database["public"]["Enums"]["budget_status"]
+          title?: string | null
           updated_at?: string
+          valid_until?: string | null
         }
         Relationships: [
           {
@@ -198,6 +248,7 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           created_by: string | null
+          description: string | null
           email: string | null
           estimated_value: number | null
           id: string
@@ -213,6 +264,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           email?: string | null
           estimated_value?: number | null
           id?: string
@@ -228,6 +280,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           created_by?: string | null
+          description?: string | null
           email?: string | null
           estimated_value?: number | null
           id?: string
@@ -249,6 +302,47 @@ export type Database = {
           },
         ]
       }
+      organization_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           active: boolean
@@ -256,6 +350,7 @@ export type Database = {
           id: string
           organization_id: string
           role: Database["public"]["Enums"]["org_role"]
+          status: string | null
           user_id: string
         }
         Insert: {
@@ -264,6 +359,7 @@ export type Database = {
           id?: string
           organization_id: string
           role?: Database["public"]["Enums"]["org_role"]
+          status?: string | null
           user_id: string
         }
         Update: {
@@ -272,6 +368,7 @@ export type Database = {
           id?: string
           organization_id?: string
           role?: Database["public"]["Enums"]["org_role"]
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -292,6 +389,8 @@ export type Database = {
           name: string
           owner_id: string
           phone: string | null
+          settings: Json
+          status: string
           updated_at: string
         }
         Insert: {
@@ -301,6 +400,8 @@ export type Database = {
           name: string
           owner_id: string
           phone?: string | null
+          settings?: Json
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -310,30 +411,41 @@ export type Database = {
           name?: string
           owner_id?: string
           phone?: string | null
+          settings?: Json
+          status?: string
           updated_at?: string
         }
         Relationships: []
       }
       pipeline_stages: {
         Row: {
+          color: string
           created_at: string
           id: string
+          is_lost: boolean
+          is_won: boolean
           key: Database["public"]["Enums"]["lead_stage"]
           name: string
           organization_id: string
           position: number
         }
         Insert: {
+          color?: string
           created_at?: string
           id?: string
+          is_lost?: boolean
+          is_won?: boolean
           key: Database["public"]["Enums"]["lead_stage"]
           name: string
           organization_id: string
           position: number
         }
         Update: {
+          color?: string
           created_at?: string
           id?: string
+          is_lost?: boolean
+          is_won?: boolean
           key?: Database["public"]["Enums"]["lead_stage"]
           name?: string
           organization_id?: string
@@ -356,6 +468,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string
         }
         Insert: {
@@ -364,6 +477,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -372,34 +486,47 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
       }
       subscription_events: {
         Row: {
+          created_at: string
           event_type: string
+          external_event_id: string | null
           id: string
           organization_id: string | null
           payload: Json | null
+          processed_at: string | null
           provider: string
           received_at: string
+          subscription_id: string | null
         }
         Insert: {
+          created_at?: string
           event_type: string
+          external_event_id?: string | null
           id?: string
           organization_id?: string | null
           payload?: Json | null
+          processed_at?: string | null
           provider?: string
           received_at?: string
+          subscription_id?: string | null
         }
         Update: {
+          created_at?: string
           event_type?: string
+          external_event_id?: string | null
           id?: string
           organization_id?: string | null
           payload?: Json | null
+          processed_at?: string | null
           provider?: string
           received_at?: string
+          subscription_id?: string | null
         }
         Relationships: [
           {
@@ -409,12 +536,20 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscription_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subscriptions: {
         Row: {
           created_at: string
           current_period_end: string | null
+          current_period_start: string | null
           id: string
           organization_id: string
           plan: Database["public"]["Enums"]["subscription_plan"]
@@ -423,11 +558,13 @@ export type Database = {
           provider_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at: string | null
+          trial_start: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           organization_id: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -436,11 +573,13 @@ export type Database = {
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_start?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           current_period_end?: string | null
+          current_period_start?: string | null
           id?: string
           organization_id?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -449,6 +588,7 @@ export type Database = {
           provider_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"]
           trial_ends_at?: string | null
+          trial_start?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -530,8 +670,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_pending_invites: { Args: never; Returns: number }
+      is_active_member: {
+        Args: { _org: string; _user: string }
+        Returns: boolean
+      }
       is_org_admin: { Args: { _org: string }; Returns: boolean }
       is_org_member: { Args: { _org: string }; Returns: boolean }
+      is_org_owner: { Args: { _org: string }; Returns: boolean }
     }
     Enums: {
       budget_status: "rascunho" | "enviado" | "aprovado" | "recusado"
@@ -542,7 +688,7 @@ export type Database = {
         | "orcamento_enviado"
         | "venda_concluida"
         | "venda_perdida"
-      org_role: "owner" | "admin" | "member"
+      org_role: "owner" | "admin" | "sales" | "member"
       subscription_plan: "start" | "pro"
       subscription_status:
         | "trialing"
@@ -550,6 +696,7 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "expired"
+        | "suspended"
       task_status: "pendente" | "em_andamento" | "concluida" | "cancelada"
     }
     CompositeTypes: {
@@ -687,7 +834,7 @@ export const Constants = {
         "venda_concluida",
         "venda_perdida",
       ],
-      org_role: ["owner", "admin", "member"],
+      org_role: ["owner", "admin", "sales", "member"],
       subscription_plan: ["start", "pro"],
       subscription_status: [
         "trialing",
@@ -695,6 +842,7 @@ export const Constants = {
         "past_due",
         "canceled",
         "expired",
+        "suspended",
       ],
       task_status: ["pendente", "em_andamento", "concluida", "cancelada"],
     },
