@@ -22,6 +22,13 @@
       "when": 1793658881757,
       "tag": "0002_phase3_security_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793658952893,
+      "tag": "0003_audit_skip_on_org_delete",
+      "breakpoints": true
     }
   ]
 }
