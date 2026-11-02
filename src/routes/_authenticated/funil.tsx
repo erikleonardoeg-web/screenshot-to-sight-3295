@@ -7,7 +7,7 @@ import { LeadFormDialog } from "@/components/app/LeadFormDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STAGES, brl, dateBR } from "@/lib/demo-data";
+import { STAGES, brl, dateBR } from "@/lib/format";
 import { useLeads, useMoveLead, type Lead } from "@/lib/leads";
 import { memberName, useMembers } from "@/hooks/use-members";
 import { cn } from "@/lib/utils";

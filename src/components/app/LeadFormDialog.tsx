@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STAGES } from "@/lib/demo-data";
+import { STAGES } from "@/lib/format";
 import { LEAD_SOURCES, useSaveLead, type Lead } from "@/lib/leads";
 import { useMembers } from "@/hooks/use-members";
 import { Spinner } from "./states";

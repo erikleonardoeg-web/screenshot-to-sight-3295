@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentOrg } from "@/hooks/use-organization";
 import { ROLE_LABEL, useMembers, type Member } from "@/hooks/use-members";
-import { dateBR } from "@/lib/demo-data";
+import { dateBR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/equipe")({
