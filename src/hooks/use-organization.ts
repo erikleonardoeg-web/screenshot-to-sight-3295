@@ -7,6 +7,8 @@ export const currentOrgQuery = queryOptions({
     const { data: auth } = await supabase.auth.getUser();
     const user = auth.user;
     if (!user) return null;
+    // Aceita convites pendentes para o e-mail confirmado (validado no servidor)
+    await supabase.rpc("accept_pending_invites");
     const [{ data: membership }, { data: profile }] = await Promise.all([
       supabase
         .from("organization_members")
