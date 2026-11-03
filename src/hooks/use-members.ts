@@ -5,14 +5,14 @@ import { useCurrentOrg } from "./use-organization";
 export interface Member {
   id: string;
   user_id: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "sales" | "member";
   active: boolean;
   created_at: string;
   full_name: string | null;
   email: string | null;
 }
 
-export const ROLE_LABEL: Record<Member["role"], string> = { owner: "Proprietário", admin: "Administrador", member: "Funcionário" };
+export const ROLE_LABEL: Record<Member["role"], string> = { owner: "Proprietário", admin: "Administrador", sales: "Vendedor", member: "Funcionário" };
 
 export function useMembers() {
   const { data: ctx } = useCurrentOrg();

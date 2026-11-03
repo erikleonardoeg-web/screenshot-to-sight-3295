@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent } from "react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -46,6 +46,11 @@ function SettingsPage() {
     qc.invalidateQueries({ queryKey: currentOrgQuery.queryKey });
   }
 
+  const { data: sub } = useQuery({
+    queryKey: ["subscription", org?.id], enabled: !!org?.id && data?.role === "owner",
+    queryFn: async () => (await supabase.from("subscriptions").select("plan, status, trial_ends_at").eq("organization_id", org!.id).maybeSingle()).data,
+  });
+  const SUB_LABEL: Record<string, string> = { trialing: "Em teste", active: "Ativa", past_due: "Pagamento pendente", suspended: "Suspensa", canceled: "Cancelada", expired: "Expirada" };
   if (!data) return null;
   return (
     <>
@@ -87,7 +92,9 @@ function SettingsPage() {
           <Panel title="Preferências"><p className="text-sm text-muted-foreground">Notificações, idioma e fuso horário serão configuráveis na próxima fase.</p></Panel>
         </TabsContent>
         <TabsContent value="conta">
-          <Panel title="Assinatura e plano" action={<Badge variant="outline">Em breve</Badge>}>
+          <Panel title="Assinatura e plano" action={sub ? <Badge variant="outline">{SUB_LABEL[sub.status] ?? sub.status}</Badge> : null}>
+            {data.role !== "owner" ? <p className="text-sm text-muted-foreground">Somente o proprietário da empresa pode ver e gerenciar a assinatura.</p> : <>
+            {sub?.trial_ends_at && sub.status === "trialing" && <p className="mb-3 text-sm">Seu teste termina em <strong>{new Date(sub.trial_ends_at).toLocaleDateString("pt-BR")}</strong>.</p>}
             <div className="mb-4 flex items-start gap-3 rounded-lg bg-muted p-4 text-sm">
               <CreditCard className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
               <p className="text-muted-foreground">Teste grátis de {TRIAL_DAYS} dias. A contratação será feita por checkout seguro da Cakto, disponível em breve. Nenhuma cobrança é feita agora.</p>
@@ -102,6 +109,7 @@ function SettingsPage() {
                 </div>
               ))}
             </div>
+            </>}
           </Panel>
         </TabsContent>
       </Tabs>
