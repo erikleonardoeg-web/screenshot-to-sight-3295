@@ -19,10 +19,10 @@ export function useOrgRows<T extends OrgTable>(table: T) {
     queryKey: [table, orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from(table).select("*").eq("organization_id", orgId!)
+      const { data, error } = await supabase.from(table as "clients").select("*").eq("organization_id", orgId!)
         .order(ORDER[table], { ascending: table === "tasks", nullsFirst: false });
       if (error) throw error;
-      return data as Tables[T]["Row"][];
+      return data as unknown as Tables[T]["Row"][];
     },
   });
 }
@@ -38,8 +38,8 @@ export function useSaveRow<T extends OrgTable>(table: T) {
       if (!orgId) throw new Error("Empresa não encontrada.");
       // organization_id vem da associação validada no servidor; o banco rejeita qualquer outra empresa
       const { error } = id
-        ? await supabase.from(table).update(values as never).eq("id", id)
-        : await supabase.from(table).insert({ ...values, organization_id: orgId } as never);
+        ? await supabase.from(table as "clients").update(values as never).eq("id", id)
+        : await supabase.from(table as "clients").insert({ ...values, organization_id: orgId } as never);
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
@@ -54,7 +54,7 @@ export function useDeleteRow(table: OrgTable) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data, error } = await supabase.from(table).delete().eq("id", id).select("id");
+      const { data, error } = await supabase.from(table as "clients").delete().eq("id", id).select("id");
       if (error) throw error;
       if (!data.length) throw new Error("Apenas administradores podem excluir.");
     },
