@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { STAGES } from "@/lib/format";
+import { usePipeline } from "@/lib/pipeline";
+import { contactError, moneyValue } from "@/lib/contact";
 import { LEAD_SOURCES, useSaveLead, type Lead } from "@/lib/leads";
 import { useMembers } from "@/hooks/use-members";
 import { Spinner } from "./states";
@@ -14,6 +15,7 @@ const NONE = "__none";
 
 export function LeadFormDialog({ open, onOpenChange, lead }: { open: boolean; onOpenChange: (o: boolean) => void; lead?: Lead | null }) {
   const save = useSaveLead();
+  const { data: stages = [] } = usePipeline();
   const { data: members = [] } = useMembers();
   const [stage, setStage] = useState<Lead["stage"]>(lead?.stage ?? "novo");
   const [source, setSource] = useState(lead?.source ?? "WhatsApp");
@@ -25,20 +27,28 @@ export function LeadFormDialog({ open, onOpenChange, lead }: { open: boolean; on
     const f = new FormData(e.currentTarget);
     const name = String(f.get("name")).trim();
     if (!name) { setNameError("Informe o nome do lead."); return; }
-    const value = String(f.get("estimated_value")).replace(",", ".");
+    const phone = String(f.get("phone")).trim() || null;
+    const email = String(f.get("email")).trim() || null;
+    const invalid = contactError(phone, email);
+    const value = String(f.get("estimated_value")).trim();
+    if (invalid) { setNameError(invalid); return; }
+    if (value && !Number.isFinite(moneyValue(value))) { setNameError("Informe um valor válido e não negativo."); return; }
+    try {
     await save.mutateAsync({
       ...(lead ? { id: lead.id } : {}),
       values: {
         name,
-        phone: String(f.get("phone")).trim() || null,
-        email: String(f.get("email")).trim() || null,
+        phone,
+        email,
         notes: String(f.get("notes")).trim() || null,
-        estimated_value: value ? Number(value) : null,
+        estimated_value: value ? moneyValue(value) : null,
+        description: String(f.get("description")).trim() || null,
         source, stage,
         assigned_to: owner === NONE ? null : owner,
       },
     });
     onOpenChange(false);
+    } catch { /* mutation displays the error */ }
   }
 
   return (
@@ -70,7 +80,7 @@ export function LeadFormDialog({ open, onOpenChange, lead }: { open: boolean; on
               <Label>Etapa</Label>
               <Select value={stage} onValueChange={(v) => setStage(v as Lead["stage"])}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STAGES.map((s) => <SelectItem key={s.key} value={s.key}>{s.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{stages.filter((s) => s.active || s.key === stage).map((s) => <SelectItem key={s.key} value={s.key}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
@@ -87,6 +97,7 @@ export function LeadFormDialog({ open, onOpenChange, lead }: { open: boolean; on
             </div>
             <div className="space-y-1.5"><Label htmlFor="estimated_value">Valor potencial (R$)</Label><Input id="estimated_value" name="estimated_value" inputMode="decimal" placeholder="0,00" defaultValue={lead?.estimated_value ?? ""} /></div>
           </div>
+          <div className="space-y-1.5"><Label htmlFor="description">Descrição</Label><Textarea id="description" name="description" rows={2} defaultValue={lead?.description ?? ""} /></div>
           <div className="space-y-1.5"><Label htmlFor="notes">Observações</Label><Textarea id="notes" name="notes" rows={3} defaultValue={lead?.notes ?? ""} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
