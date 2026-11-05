@@ -3,6 +3,8 @@ import { useState, type DragEvent } from "react";
 import { Calendar, Kanban, Phone, Plus, UserRound } from "lucide-react";
 import { PageHeader } from "@/components/app/common";
 import { EmptyState } from "@/components/app/states";
+import { usePipeline } from "@/lib/pipeline";
+import { LeadDetailDialog } from "@/components/app/LeadDetailDialog";
 import { LeadFormDialog } from "@/components/app/LeadFormDialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +23,9 @@ function FunnelPage() {
   const { data: leads, isLoading } = useLeads();
   const { data: members } = useMembers();
   const move = useMoveLead();
+  const { data: configured = [], isLoading: stagesLoading } = usePipeline();
+  const stages = configured.filter((s) => s.active);
+  const [detail, setDetail] = useState<Lead | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ open: boolean; lead: Lead | null }>({ open: false, lead: null });
 
@@ -36,14 +41,14 @@ function FunnelPage() {
     <>
       <PageHeader title="Funil de vendas" description="Arraste os cartões entre as etapas ou altere a etapa no próprio cartão."
         actions={<Button onClick={() => setDialog({ open: true, lead: null })}><Plus /> Adicionar lead</Button>} />
-      {isLoading ? (
-        <div className="flex gap-4 overflow-hidden">{STAGES.map((s) => <Skeleton key={s.key} className="h-72 w-72 shrink-0 rounded-xl" />)}</div>
+      {isLoading || stagesLoading ? (
+        <div className="flex gap-4 overflow-hidden">{stages.map((s) => <Skeleton key={s.key} className="h-72 w-72 shrink-0 rounded-xl" />)}</div>
       ) : !leads?.length ? (
         <EmptyState icon={Kanban} title="Seu funil está vazio" description="Adicione leads para visualizá-los por etapa comercial." action={<Button onClick={() => setDialog({ open: true, lead: null })}><Plus /> Adicionar lead</Button>} />
       ) : (
         <div className="-mx-4 snap-x overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6">
           <div className="flex gap-4">
-            {STAGES.map((s) => {
+            {stages.map((s) => {
               const items = leads.filter((l) => l.stage === s.key);
               const total = items.reduce((a, l) => a + Number(l.estimated_value ?? 0), 0);
               return (
@@ -53,7 +58,7 @@ function FunnelPage() {
                   onDrop={(e) => onDrop(e, s.key)}
                   className={cn("flex w-[85vw] max-w-72 shrink-0 snap-start flex-col rounded-xl bg-muted p-3 transition-colors sm:w-72", over === s.key && "bg-accent ring-2 ring-primary/40")}>
                   <div className="mb-1 flex items-center justify-between px-1">
-                    <h3 className="text-sm font-semibold">{s.name}</h3>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold"><span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: s.color }} />{s.name}{s.is_won ? " ✓" : s.is_lost ? " ×" : ""}</h3>
                     <span className="rounded-full bg-card px-2 text-xs font-medium text-muted-foreground">{items.length}</span>
                   </div>
                   <p className="mb-3 px-1 text-xs text-muted-foreground">{brl(total)}</p>
@@ -61,7 +66,7 @@ function FunnelPage() {
                     {items.map((l) => (
                       <article key={l.id} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", l.id)}
                         className="cursor-grab rounded-lg border bg-card p-3 shadow-card transition-shadow hover:shadow-md active:cursor-grabbing">
-                        <button className="w-full text-left" onClick={() => setDialog({ open: true, lead: l })}>
+                        <Button variant="ghost" className="h-auto w-full flex-col items-stretch p-0 text-left" onClick={() => setDetail(l)}>
                           <p className="text-sm font-medium">{l.name}</p>
                           <p className="mt-1.5 text-base font-semibold">{l.estimated_value != null ? brl(Number(l.estimated_value)) : <span className="text-sm font-normal text-muted-foreground">Sem valor</span>}</p>
                           <div className="mt-2 space-y-1 text-xs text-muted-foreground">
@@ -69,10 +74,10 @@ function FunnelPage() {
                             <p className="flex items-center gap-1.5"><UserRound className="size-3" />{memberName(members, l.assigned_to)}</p>
                             <p className="flex items-center gap-1.5"><Calendar className="size-3" />{dateBR(l.created_at)}</p>
                           </div>
-                        </button>
+                        </Button>
                         <Select value={l.stage} onValueChange={(v) => move.mutate({ id: l.id, stage: v as Lead["stage"] })}>
                           <SelectTrigger className="mt-3 h-8 text-xs" aria-label="Mover para etapa"><SelectValue /></SelectTrigger>
-                          <SelectContent>{STAGES.map((x) => <SelectItem key={x.key} value={x.key}>{x.name}</SelectItem>)}</SelectContent>
+                          <SelectContent>{stages.map((x) => <SelectItem key={x.key} value={x.key}>{x.name}</SelectItem>)}</SelectContent>
                         </Select>
                       </article>
                     ))}
@@ -84,6 +89,7 @@ function FunnelPage() {
           </div>
         </div>
       )}
+      {detail && <LeadDetailDialog lead={detail} onClose={() => setDetail(null)} />}
       {dialog.open && <LeadFormDialog open onOpenChange={(o) => setDialog({ open: o, lead: o ? dialog.lead : null })} lead={dialog.lead} />}
     </>
   );

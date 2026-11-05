@@ -6,7 +6,8 @@ export type LeadStage =
   | "negociacao"
   | "orcamento_enviado"
   | "venda_concluida"
-  | "venda_perdida";
+  | "venda_perdida"
+  | `custom_${string}`;
 
 export const STAGES: { key: LeadStage; name: string }[] = [
   { key: "novo", name: "Novo lead" },

@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { useCurrentOrg } from "@/hooks/use-organization";
 
 export type Lead = Database["public"]["Tables"]["leads"]["Row"];
-export type LeadInput = Pick<Lead, "name" | "phone" | "email" | "source" | "stage" | "assigned_to" | "notes" | "estimated_value">;
+export type LeadInput = Pick<Lead, "name" | "phone" | "email" | "source" | "stage" | "assigned_to" | "notes" | "estimated_value" | "description">;
 
 export const LEAD_SOURCES = ["WhatsApp", "Instagram", "Facebook", "Google", "Site", "Indicação", "Outro"];
 
@@ -16,7 +16,8 @@ export function useLeads() {
     queryKey: ["leads", orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("leads").select("*").eq("organization_id", orgId!).order("created_at", { ascending: false });
+      if (!orgId) return [];
+      const { data, error } = await supabase.from("leads").select("*").eq("organization_id", orgId).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },

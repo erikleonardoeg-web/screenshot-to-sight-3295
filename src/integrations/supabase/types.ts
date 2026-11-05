@@ -419,6 +419,7 @@ export type Database = {
       }
       pipeline_stages: {
         Row: {
+          active: boolean
           color: string
           created_at: string
           id: string
@@ -430,6 +431,7 @@ export type Database = {
           position: number
         }
         Insert: {
+          active?: boolean
           color?: string
           created_at?: string
           id?: string
@@ -441,6 +443,7 @@ export type Database = {
           position: number
         }
         Update: {
+          active?: boolean
           color?: string
           created_at?: string
           id?: string
@@ -671,6 +674,7 @@ export type Database = {
     }
     Functions: {
       accept_pending_invites: { Args: never; Returns: number }
+      convert_lead_to_client: { Args: { _lead: string }; Returns: string }
       is_active_member: {
         Args: { _org: string; _user: string }
         Returns: boolean
@@ -688,6 +692,18 @@ export type Database = {
         | "orcamento_enviado"
         | "venda_concluida"
         | "venda_perdida"
+        | "custom_01"
+        | "custom_02"
+        | "custom_03"
+        | "custom_04"
+        | "custom_05"
+        | "custom_06"
+        | "custom_07"
+        | "custom_08"
+        | "custom_09"
+        | "custom_10"
+        | "custom_11"
+        | "custom_12"
       org_role: "owner" | "admin" | "sales" | "member"
       subscription_plan: "start" | "pro"
       subscription_status:
@@ -833,6 +849,18 @@ export const Constants = {
         "orcamento_enviado",
         "venda_concluida",
         "venda_perdida",
+        "custom_01",
+        "custom_02",
+        "custom_03",
+        "custom_04",
+        "custom_05",
+        "custom_06",
+        "custom_07",
+        "custom_08",
+        "custom_09",
+        "custom_10",
+        "custom_11",
+        "custom_12",
       ],
       org_role: ["owner", "admin", "sales", "member"],
       subscription_plan: ["start", "pro"],

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { useCurrentOrg } from "@/hooks/use-organization";
+import { moneyValue } from "@/lib/contact";
 
 type Tables = Database["public"]["Tables"];
 export type Client = Tables["clients"]["Row"];
@@ -19,7 +20,8 @@ export function useOrgRows<T extends OrgTable>(table: T) {
     queryKey: [table, orgId],
     enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from(table as "clients").select("*").eq("organization_id", orgId!)
+      if (!orgId) return [] as Tables[T]["Row"][];
+      const { data, error } = await supabase.from(table as "clients").select("*").eq("organization_id", orgId)
         .order(ORDER[table], { ascending: table === "tasks", nullsFirst: false });
       if (error) throw error;
       return data as unknown as Tables[T]["Row"][];
@@ -37,10 +39,11 @@ export function useSaveRow<T extends OrgTable>(table: T) {
       const orgId = ctx?.organization?.id;
       if (!orgId) throw new Error("Empresa não encontrada.");
       // organization_id vem da associação validada no servidor; o banco rejeita qualquer outra empresa
-      const { error } = id
-        ? await supabase.from(table as "clients").update(values as never).eq("id", id)
-        : await supabase.from(table as "clients").insert({ ...values, organization_id: orgId } as never);
+      const { data, error } = id
+        ? await supabase.from(table as "clients").update(values as never).eq("id", id).eq("organization_id", orgId).select("id")
+        : await supabase.from(table as "clients").insert({ ...values, organization_id: orgId } as never).select("id");
       if (error) throw error;
+      if (!data?.length) throw new Error("Registro não encontrado ou acesso negado.");
     },
     onSuccess: (_d, v) => {
       toast.success(`${MSG[table]} ${v.id ? "atualizado" : "salvo"}.`);
@@ -67,7 +70,6 @@ export const BUDGET_STATUS = { rascunho: "Rascunho", enviado: "Enviado", aprovad
 export const TASK_STATUS = { pendente: "Pendente", em_andamento: "Em andamento", concluida: "Concluída", cancelada: "Cancelada" } as const;
 
 export const parseMoney = (v: FormDataEntryValue | null) => {
-  const s = String(v ?? "").trim().replace(/\./g, "").replace(",", ".");
-  return s ? Number(s) : 0;
+  return moneyValue(String(v ?? ""));
 };
 export const str = (v: FormDataEntryValue | null) => String(v ?? "").trim() || null;

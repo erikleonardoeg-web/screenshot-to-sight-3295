@@ -1,4 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { contactError } from "@/lib/contact";
+import { WhatsAppButton } from "@/components/app/WhatsAppButton";
+import { InteractionHistory } from "@/components/app/InteractionHistory";
+import { TASK_STATUS } from "@/lib/crm";
 import { useState, type FormEvent } from "react";
 import { Briefcase, Plus } from "lucide-react";
 import { PageHeader, StatusBadge } from "@/components/app/common";
@@ -23,6 +30,8 @@ export const Route = createFileRoute("/_authenticated/clientes")({
 
 function ClientsPage() {
   const { data: clients, isLoading } = useOrgRows("clients");
+  const [search, setSearch] = useState("");
+  const { data: tasks = [] } = useOrgRows("tasks");
   const { data: budgets = [] } = useOrgRows("budgets");
   const { data: members } = useMembers();
   const [form, setForm] = useState<{ open: boolean; client: Client | null }>({ open: false, client: null });
@@ -33,6 +42,7 @@ function ClientsPage() {
   return (
     <>
       <PageHeader title="Clientes" description="Leads convertidos e seu histórico comercial." actions={<Button onClick={openNew}><Plus /> Novo cliente</Button>} />
+      <Input className="mb-4" aria-label="Buscar clientes" placeholder="Buscar nome, telefone ou e-mail" value={search} onChange={(e) => setSearch(e.target.value)} />
       {isLoading ? <TableSkeleton /> : !clients?.length ? (
         <EmptyState icon={Briefcase} title="Nenhum cliente ainda" description="Converta um lead ou cadastre um cliente para acompanhar o histórico." action={<Button onClick={openNew}><Plus /> Novo cliente</Button>} />
       ) : (
@@ -43,7 +53,7 @@ function ClientsPage() {
               <TableHead>Conversão</TableHead><TableHead className="text-right">Aprovado</TableHead>
             </TableRow></TableHeader>
             <TableBody>
-              {clients.map((c) => (
+              {clients.filter((c) => [c.name,c.phone,c.email].join(" ").toLowerCase().includes(search.toLowerCase())).map((c) => (
                 <TableRow key={c.id} className="cursor-pointer" onClick={() => setDetail(c)}>
                   <TableCell className="font-medium">{c.name}</TableCell>
                   <TableCell><p>{c.phone || "—"}</p><p className="text-xs text-muted-foreground">{c.email}</p></TableCell>
@@ -58,7 +68,7 @@ function ClientsPage() {
       )}
       {form.open && <ClientForm client={form.client} onClose={() => setForm({ open: false, client: null })} />}
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           {detail && (
             <>
               <DialogHeader>
@@ -69,6 +79,8 @@ function ClientsPage() {
                 <div><dt className="text-muted-foreground">Telefone</dt><dd>{detail.phone || "—"}</dd></div>
                 <div><dt className="text-muted-foreground">E-mail</dt><dd className="truncate">{detail.email || "—"}</dd></div>
               </dl>
+              {detail.address && <p className="text-sm">{detail.address}</p>}
+              <WhatsAppButton phone={detail.phone} />
               {detail.notes && <p className="text-sm text-muted-foreground">{detail.notes}</p>}
               <h3 className="text-sm font-semibold">Histórico de orçamentos</h3>
               {budgets.filter((b) => b.client_id === detail.id).length === 0 ? <p className="text-sm text-muted-foreground">Nenhum orçamento vinculado.</p> : (
@@ -81,6 +93,10 @@ function ClientsPage() {
                   ))}
                 </ul>
               )}
+              <h3 className="text-sm font-semibold">Tarefas relacionadas</h3>
+              {tasks.filter((t) => t.client_id === detail.id).map((t) => <p className="text-sm" key={t.id}>{t.title} · {TASK_STATUS[t.status]} · {t.due_at ? new Date(t.due_at).toLocaleString("pt-BR") : "Sem prazo"}</p>)}
+              {!tasks.some((t) => t.client_id === detail.id) && <p className="text-sm text-muted-foreground">Nenhuma tarefa vinculada.</p>}
+              <InteractionHistory clientId={detail.id} />
               <DialogFooter><Button variant="outline" onClick={() => { setForm({ open: true, client: detail }); setDetail(null); }}>Editar</Button></DialogFooter>
             </>
           )}
@@ -92,6 +108,8 @@ function ClientsPage() {
 
 function ClientForm({ client, onClose }: { client: Client | null; onClose: () => void }) {
   const save = useSaveRow("clients");
+  const qc = useQueryClient();
+  const [converting, setConverting] = useState(false);
   const { data: leads = [] } = useLeads();
   const [owner, setOwner] = useState(client?.assigned_to ?? NONE);
   const [leadId, setLeadId] = useState(client?.lead_id ?? NONE);
@@ -100,12 +118,25 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
+    const invalid = contactError(str(f.get("phone")),str(f.get("email")));
+    if (invalid) { toast.error(invalid); return; }
+    if (!String(f.get("name")).trim()) { toast.error("Informe o nome do cliente."); return; }
+    try {
+    if (!client && leadId !== NONE) {
+      setConverting(true);
+      const { error } = await supabase.rpc("convert_lead_to_client", { _lead: leadId });
+      if (error) { toast.error(error.message); return; }
+      for (const key of ["clients","leads","tasks","budgets","interactions"]) qc.invalidateQueries({ queryKey: [key] });
+      toast.success("Lead convertido em cliente.");
+      onClose(); return;
+    }
     await save.mutateAsync({
       ...(client ? { id: client.id } : {}),
-      values: { name: String(f.get("name")).trim(), phone: str(f.get("phone")), email: str(f.get("email")), notes: str(f.get("notes")),
+      values: { name: String(f.get("name")).trim(), phone: str(f.get("phone")), email: str(f.get("email")), address: str(f.get("address")), notes: str(f.get("notes")),
         assigned_to: owner === NONE ? null : owner, lead_id: leadId === NONE ? null : leadId },
     });
     onClose();
+    } catch { /* toast */ } finally { setConverting(false); }
   }
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -130,10 +161,11 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
             <div className="space-y-1.5"><Label htmlFor="email">E-mail</Label><Input id="email" name="email" type="email" defaultValue={client?.email ?? lead?.email ?? ""} /></div>
           </div>
           <div className="space-y-1.5"><Label>Responsável</Label><MemberSelect value={owner} onChange={setOwner} /></div>
+          <div className="space-y-1.5"><Label htmlFor="address">Endereço</Label><Input id="address" name="address" defaultValue={client?.address ?? ""} /></div>
           <div className="space-y-1.5"><Label htmlFor="notes">Observações</Label><Textarea id="notes" name="notes" rows={3} defaultValue={client?.notes ?? ""} /></div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={save.isPending}>{save.isPending ? <Spinner label="Salvando" /> : "Salvar"}</Button>
+            <Button type="submit" disabled={save.isPending || converting}>{save.isPending || converting ? <Spinner label="Salvando" /> : !client && leadId !== NONE ? "Converter lead" : "Salvar"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

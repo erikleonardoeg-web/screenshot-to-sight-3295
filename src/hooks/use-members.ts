@@ -21,13 +21,16 @@ export function useMembers() {
     queryKey: ["members", orgId],
     enabled: !!orgId,
     queryFn: async (): Promise<Member[]> => {
+      if (!orgId) return [];
       const { data: rows, error } = await supabase
         .from("organization_members")
         .select("id, user_id, role, active, created_at")
-        .eq("organization_id", orgId!)
+        .eq("organization_id", orgId)
         .order("created_at");
       if (error) throw error;
-      const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", rows.map((r) => r.user_id));
+      if (!rows.length) return [];
+      const { data: profiles, error: profileError } = await supabase.from("profiles").select("id, full_name, email").in("id", rows.map((r) => r.user_id));
+      if (profileError) throw profileError;
       return rows.map((r) => {
         const p = profiles?.find((x) => x.id === r.user_id);
         return { ...r, full_name: p?.full_name ?? null, email: p?.email ?? null };

@@ -1,4 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { isOverdue } from "@/lib/contact";
+import { useCurrentOrg } from "@/hooks/use-organization";
+import { ConfirmDelete } from "@/components/app/ConfirmDelete";
+import { useDeleteRow } from "@/lib/crm";
 import { useState, type FormEvent } from "react";
 import { CheckSquare, Plus } from "lucide-react";
 import { PageHeader, StatusBadge } from "@/components/app/common";
@@ -28,29 +33,34 @@ function TasksPage() {
   const { data: members } = useMembers();
   const { data: leads = [] } = useLeads();
   const save = useSaveRow("tasks");
+  const { data: clients = [] } = useOrgRows("clients");
   const [form, setForm] = useState<{ open: boolean; task: Task | null }>({ open: false, task: null });
   const openNew = () => setForm({ open: true, task: null });
+  const [filter, setFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
   const now = Date.now();
   return (
     <>
       <PageHeader title="Tarefas" description="Lembretes, próximos contatos e prazos da equipe." actions={<Button onClick={openNew}><Plus /> Nova tarefa</Button>} />
+      <div className="mb-4 grid gap-2 sm:grid-cols-2"><Select value={filter} onValueChange={setFilter}><SelectTrigger aria-label="Filtrar tarefas"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas as tarefas</SelectItem><SelectItem value="atrasadas">Atrasadas</SelectItem>{Object.entries(TASK_STATUS).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select><Select value={ownerFilter} onValueChange={setOwnerFilter}><SelectTrigger aria-label="Responsável das tarefas"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todos os responsáveis</SelectItem><SelectItem value="none">Sem responsável</SelectItem>{members?.map((m) => <SelectItem key={m.user_id} value={m.user_id}>{m.full_name || m.email}</SelectItem>)}</SelectContent></Select></div>
       {isLoading ? <TableSkeleton /> : !tasks?.length ? (
         <EmptyState icon={CheckSquare} title="Nenhuma tarefa" description="Crie lembretes e próximos contatos para não perder oportunidades." action={<Button onClick={openNew}><Plus /> Nova tarefa</Button>} />
       ) : (
         <ul className="divide-y rounded-xl border bg-card shadow-card">
-          {tasks.map((t) => {
-            const late = t.due_at && t.status !== "concluida" && new Date(t.due_at).getTime() < now;
+          {tasks.filter((t) => (filter === "all" || (filter === "atrasadas" ? isOverdue(t,now) : t.status === filter)) && (ownerFilter === "all" || (ownerFilter === "none" ? !t.assigned_to : t.assigned_to === ownerFilter))).map((t) => {
+            const late = isOverdue(t,now);
+            const client = clients.find((c) => c.id === t.client_id);
             const lead = leads.find((l) => l.id === t.lead_id);
             return (
               <li key={t.id} className="flex items-center gap-3 p-4">
                 <Checkbox checked={t.status === "concluida"} aria-label="Concluir"
                   onCheckedChange={(c) => save.mutate({ id: t.id, values: { title: t.title, status: c ? "concluida" : "pendente" } })} />
-                <button className="min-w-0 flex-1 text-left" onClick={() => setForm({ open: true, task: t })}>
+                <Button variant="ghost" className="h-auto min-w-0 flex-1 flex-col items-start whitespace-normal text-left" onClick={() => setForm({ open: true, task: t })}>
                   <p className={cn("font-medium", t.status === "concluida" && "text-muted-foreground line-through")}>{t.title}</p>
                   <p className={cn("text-xs text-muted-foreground", late && "text-destructive")}>
-                    {fmt(t.due_at)}{late && " · atrasada"} · {memberName(members, t.assigned_to)}{lead && ` · ${lead.name}`}
+                    {fmt(t.due_at)}{late && " · atrasada"} · {memberName(members, t.assigned_to)}{lead && ` · ${lead.name}`}{client && ` · ${client.name}`}
                   </p>
-                </button>
+                </Button>
                 <StatusBadge status={t.status} label={TASK_STATUS[t.status]} />
               </li>
             );
@@ -66,6 +76,10 @@ const toLocalInput = (d: string | null) => d ? new Date(new Date(d).getTime() - 
 
 function TaskForm({ task, onClose }: { task: Task | null; onClose: () => void }) {
   const save = useSaveRow("tasks");
+  const remove = useDeleteRow("tasks");
+  const { data: ctx } = useCurrentOrg();
+  const { data: clients = [] } = useOrgRows("clients");
+  const [clientId,setClientId] = useState(task?.client_id ?? NONE);
   const { data: leads = [] } = useLeads();
   const [owner, setOwner] = useState(task?.assigned_to ?? NONE);
   const [leadId, setLeadId] = useState(task?.lead_id ?? NONE);
@@ -75,12 +89,15 @@ function TaskForm({ task, onClose }: { task: Task | null; onClose: () => void })
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const due = String(f.get("due_at"));
+    if (!String(f.get("title")).trim()) { toast.error("Informe o título da tarefa."); return; }
+    try {
     await save.mutateAsync({
       ...(task ? { id: task.id } : {}),
       values: { title: String(f.get("title")).trim(), description: str(f.get("description")), due_at: due ? new Date(due).toISOString() : null,
-        status, assigned_to: owner === NONE ? null : owner, lead_id: leadId === NONE ? null : leadId },
+        client_id: clientId === NONE ? null : clientId, status, assigned_to: owner === NONE ? null : owner, lead_id: leadId === NONE ? null : leadId },
     });
     onClose();
+    } catch { /* toast */ }
   }
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
@@ -109,7 +126,9 @@ function TaskForm({ task, onClose }: { task: Task | null; onClose: () => void })
               </Select>
             </div>
           </div>
+          <div className="space-y-1.5"><Label>Cliente relacionado</Label><Select value={clientId} onValueChange={setClientId}><SelectTrigger aria-label="Cliente da tarefa"><SelectValue /></SelectTrigger><SelectContent><SelectItem value={NONE}>Nenhum</SelectItem>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select></div>
           <DialogFooter>
+            {task && (ctx?.role === "owner" || ctx?.role === "admin") && <ConfirmDelete label="Excluir tarefa" pending={remove.isPending} onConfirm={async () => { await remove.mutateAsync(task.id); onClose(); }} />}
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={save.isPending}>{save.isPending ? <Spinner label="Salvando" /> : "Salvar"}</Button>
           </DialogFooter>
