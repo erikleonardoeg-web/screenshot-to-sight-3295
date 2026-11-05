@@ -1,0 +1,6 @@
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+export function ConfirmDelete({ label, onConfirm, pending }: { label: string; onConfirm: () => Promise<unknown>; pending?: boolean }) {
+  return <AlertDialog><AlertDialogTrigger asChild><Button variant="outline" disabled={pending}><Trash2 />{label}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{label}?</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita. Os registros relacionados serão preservados, sem este vínculo.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction disabled={pending} onClick={() => { void onConfirm().catch(() => {}); }}>Confirmar exclusão</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>;
+}
