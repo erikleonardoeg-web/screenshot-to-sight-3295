@@ -36,6 +36,13 @@
       "when": 1793848959848,
       "tag": "0004_phase4_custom_stage_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793849010550,
+      "tag": "0005_phase4_conversion_pipeline_guards",
+      "breakpoints": true
     }
   ]
 }

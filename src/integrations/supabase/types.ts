@@ -419,6 +419,7 @@ export type Database = {
       }
       pipeline_stages: {
         Row: {
+          active: boolean
           color: string
           created_at: string
           id: string
@@ -430,6 +431,7 @@ export type Database = {
           position: number
         }
         Insert: {
+          active?: boolean
           color?: string
           created_at?: string
           id?: string
@@ -441,6 +443,7 @@ export type Database = {
           position: number
         }
         Update: {
+          active?: boolean
           color?: string
           created_at?: string
           id?: string
@@ -671,6 +674,7 @@ export type Database = {
     }
     Functions: {
       accept_pending_invites: { Args: never; Returns: number }
+      convert_lead_to_client: { Args: { _lead: string }; Returns: string }
       is_active_member: {
         Args: { _org: string; _user: string }
         Returns: boolean
