@@ -1,11 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { CheckCircle2, FileText, Percent, UserPlus, UsersRound } from "lucide-react";
 import { PageHeader, Panel, StatCard, StatusBadge } from "@/components/app/common";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
-import { dateBR, stageName } from "@/lib/format";
+import { dashboardMetrics } from "@/lib/dashboard";
+import { usePipeline } from "@/lib/pipeline";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EmptyState } from "@/components/app/states";
+import { brl, dateBR, stageName } from "@/lib/format";
 import { useLeads } from "@/lib/leads";
 import { useOrgRows } from "@/lib/crm";
 import { memberName, useMembers } from "@/hooks/use-members";
@@ -23,18 +27,23 @@ function Dashboard() {
   const { data: budgets = [] } = useOrgRows("budgets");
   const { data: tasks = [] } = useOrgRows("tasks");
   const { data: members } = useMembers();
+  const { data: stages = [] } = usePipeline();
+  const [period, setPeriod] = useState("0");
+  const metrics = dashboardMetrics(leads,budgets,tasks,stages,Date.now(),Number(period));
 
   const stats = useMemo(() => {
     const now = Date.now();
-    const won = leads.filter((l) => l.stage === "venda_concluida").length;
-    const closed = won + leads.filter((l) => l.stage === "venda_perdida").length;
+    const isWon = (stage: string) => stages.some((s) => s.key === stage && s.is_won);
+    const isLost = (stage: string) => stages.some((s) => s.key === stage && s.is_lost);
+    const won = leads.filter((l) => isWon(l.stage)).length;
+    const closed = won + leads.filter((l) => isLost(l.stage)).length;
     const months = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 5 + i); return d; });
     const evolution = months.map((m) => {
       const same = (iso: string) => { const d = new Date(iso); return d.getMonth() === m.getMonth() && d.getFullYear() === m.getFullYear(); };
       return {
         mes: m.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
         leads: leads.filter((l) => same(l.created_at)).length,
-        vendas: leads.filter((l) => l.stage === "venda_concluida" && same(l.updated_at)).length,
+        vendas: leads.filter((l) => isWon(l.stage) && same(l.updated_at)).length,
       };
     });
     return {
@@ -44,23 +53,30 @@ function Dashboard() {
       won,
       rate: closed ? Math.round((won / closed) * 100) : 0,
       evolution,
-      followUp: leads.filter((l) => ["novo", "primeiro_contato", "negociacao", "orcamento_enviado"].includes(l.stage) && now - new Date(l.updated_at).getTime() > 3 * DAY).slice(0, 6),
+      followUp: leads.filter((l) => !isWon(l.stage) && !isLost(l.stage) && now - new Date(l.updated_at).getTime() > 3 * DAY).slice(0, 6),
       recent: leads.slice(0, 5),
       upcoming: tasks.filter((t) => t.status === "pendente" || t.status === "em_andamento").slice(0, 6),
     };
-  }, [leads, budgets, tasks]);
+  }, [leads, budgets, tasks, stages]);
 
   if (isLoading) return <div className="grid gap-4 sm:grid-cols-5">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}</div>;
 
   return (
     <>
-      <PageHeader title="Dashboard" description="Resumo das suas oportunidades comerciais." />
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <StatCard label="Total de leads" value={String(stats.total)} icon={UsersRound} />
-        <StatCard label="Novos leads" value={String(stats.fresh)} hint="Últimos 7 dias" icon={UserPlus} />
-        <StatCard label="Orçamentos enviados" value={String(stats.sent)} hint="Aguardando resposta" icon={FileText} />
-        <StatCard label="Vendas concluídas" value={String(stats.won)} icon={CheckCircle2} />
-        <StatCard label="Taxa de conversão" value={`${stats.rate}%`} hint="Sobre negócios encerrados" icon={Percent} />
+      <PageHeader title="Dashboard" description="Resumo das suas oportunidades comerciais." actions={<Select value={period} onValueChange={setPeriod}><SelectTrigger aria-label="Período dos indicadores" className="w-48"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="0">Todo o período</SelectItem><SelectItem value="7">Últimos 7 dias</SelectItem><SelectItem value="30">Últimos 30 dias</SelectItem><SelectItem value="90">Últimos 90 dias</SelectItem></SelectContent></Select>} />
+      {!leads.length && <EmptyState icon={UserPlus} title="Nenhum lead cadastrado" description="Cadastre seu primeiro lead para acompanhar as oportunidades." action={<Link to="/leads" className="text-primary">Cadastrar primeiro lead</Link>} />}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="Total de leads" value={String(metrics.total)} icon={UsersRound} />
+        <StatCard label="Leads novos" value={String(metrics.fresh)} icon={UserPlus} />
+        <StatCard label="Em negociação" value={String(metrics.negotiation)} icon={UsersRound} />
+        <StatCard label="Orçamentos enviados" value={String(metrics.sent)} icon={FileText} />
+        <StatCard label="Vendas concluídas" value={String(metrics.won)} icon={CheckCircle2} />
+        <StatCard label="Vendas perdidas" value={String(metrics.lost)} icon={UsersRound} />
+        <StatCard label="Tarefas pendentes" value={String(metrics.pending)} hint="Todos os prazos" icon={CheckCircle2} />
+        <StatCard label="Tarefas atrasadas" value={String(metrics.overdue)} hint="Todos os prazos" icon={CheckCircle2} />
+        <StatCard label="Valor dos orçamentos" value={brl(metrics.budgetValue)} icon={FileText} />
+        <StatCard label="Valor potencial das vendas" value={metrics.saleValue === null ? "—" : brl(metrics.saleValue)} hint="Valores informados nos leads ganhos" icon={CheckCircle2} />
+        <StatCard label="Taxa de conversão" value={`${metrics.rate}%`} hint="Sobre negócios encerrados" icon={Percent} />
       </div>
       <Panel title="Evolução comercial (6 meses)" className="mt-6">
         <ChartContainer config={chartConfig} className="h-64 w-full">

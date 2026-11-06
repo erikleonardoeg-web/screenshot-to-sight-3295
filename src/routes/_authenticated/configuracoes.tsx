@@ -1,3 +1,4 @@
+import { PipelineSettings } from "@/components/app/PipelineSettings";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent } from "react";
@@ -48,7 +49,7 @@ function SettingsPage() {
 
   const { data: sub } = useQuery({
     queryKey: ["subscription", org?.id], enabled: !!org?.id && data?.role === "owner",
-    queryFn: async () => (await supabase.from("subscriptions").select("plan, status, trial_ends_at").eq("organization_id", org!.id).maybeSingle()).data,
+    queryFn: async () => { if (!org) return null; return (await supabase.from("subscriptions").select("plan, status, trial_ends_at").eq("organization_id", org.id).maybeSingle()).data; },
   });
   const SUB_LABEL: Record<string, string> = { trialing: "Em teste", active: "Ativa", past_due: "Pagamento pendente", suspended: "Suspensa", canceled: "Cancelada", expired: "Expirada" };
   if (!data) return null;
@@ -56,10 +57,11 @@ function SettingsPage() {
     <>
       <PageHeader title="Configurações" description="Empresa, perfil, preferências e conta." />
       <Tabs defaultValue="empresa">
-        <TabsList className="mb-4 flex-wrap">
+        <TabsList className="mb-4 h-auto flex-wrap justify-start">
           <TabsTrigger value="empresa">Empresa</TabsTrigger>
           <TabsTrigger value="perfil">Perfil</TabsTrigger>
           <TabsTrigger value="equipe">Equipe</TabsTrigger>
+          <TabsTrigger value="funil">Funil</TabsTrigger>
           <TabsTrigger value="preferencias">Preferências</TabsTrigger>
           <TabsTrigger value="conta">Assinatura e plano</TabsTrigger>
         </TabsList>
@@ -88,6 +90,7 @@ function SettingsPage() {
             <Button variant="outline" asChild><Link to="/equipe"><Users /> Abrir equipe</Link></Button>
           </Panel>
         </TabsContent>
+        <TabsContent value="funil"><PipelineSettings /></TabsContent>
         <TabsContent value="preferencias">
           <Panel title="Preferências"><p className="text-sm text-muted-foreground">Notificações, idioma e fuso horário serão configuráveis na próxima fase.</p></Panel>
         </TabsContent>
