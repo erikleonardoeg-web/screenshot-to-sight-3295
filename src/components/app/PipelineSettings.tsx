@@ -55,9 +55,9 @@ function StageEditor({row,disabled,onSave,actions}: {row:Stage;disabled:boolean;
   return <form className="grid gap-3 py-4" onSubmit={(e) => {e.preventDefault(); const f=new FormData(e.currentTarget); void onSave({name:String(f.get("name")).trim(),color:String(f.get("color")),is_won:won,is_lost:lost,active});}}>
     <div className="flex gap-2"><Input aria-label={`Nome ${row.name}`} name="name" defaultValue={row.name} required maxLength={120} disabled={disabled}/><Input aria-label={`Cor ${row.name}`} type="color" name="color" className="w-14 shrink-0 p-1" defaultValue={row.color} disabled={disabled}/></div>
     <div className="flex flex-wrap items-center gap-4 text-sm">
-      <Label><Checkbox disabled={disabled} checked={won} onCheckedChange={(v)=>{setWon(v===true); if(v) setLost(false);}}/>Venda concluída</Label>
-      <Label><Checkbox disabled={disabled} checked={lost} onCheckedChange={(v)=>{setLost(v===true); if(v) setWon(false);}}/>Venda perdida</Label>
-      <Label><Checkbox disabled={disabled} checked={active} onCheckedChange={(v)=>setActive(v===true)}/>Ativa</Label>
+      <Label className="flex items-center gap-2"><Checkbox disabled={disabled} checked={won} onCheckedChange={(v)=>{setWon(v===true); if(v) setLost(false);}}/>Venda concluída</Label>
+      <Label className="flex items-center gap-2"><Checkbox disabled={disabled} checked={lost} onCheckedChange={(v)=>{setLost(v===true); if(v) setWon(false);}}/>Venda perdida</Label>
+      <Label className="flex items-center gap-2"><Checkbox disabled={disabled} checked={active} onCheckedChange={(v)=>setActive(v===true)}/>Ativa</Label>
       <Button disabled={disabled} variant="outline" type="submit">Salvar etapa</Button>{actions}
     </div>
   </form>;
