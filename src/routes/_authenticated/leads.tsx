@@ -63,14 +63,14 @@ function LeadsPage() {
               <Select value={source} onValueChange={(v) => {setSource(v); setPage(1);}}><SelectTrigger aria-label="Filtrar origem"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas as origens</SelectItem>{Array.from(new Set(leads.map((l) => l.source).filter((v): v is string => !!v))).map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent></Select>
               <Select value={sort} onValueChange={setSort}><SelectTrigger aria-label="Ordenar leads"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="created_at">Cadastro recente</SelectItem><SelectItem value="updated_at">Atualização recente</SelectItem></SelectContent></Select>
               <Select value={stage} onValueChange={setStage}>
-                <SelectTrigger className="md:w-48"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as etapas</SelectItem>
                   {stages.map((s) => <SelectItem key={s.key} value={s.key}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={owner} onValueChange={setOwner}>
-                <SelectTrigger className="md:w-48"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-full text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os responsáveis</SelectItem>
                   <SelectItem value="none">Sem responsável</SelectItem>
