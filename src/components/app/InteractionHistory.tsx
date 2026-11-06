@@ -15,7 +15,7 @@ export function InteractionHistory({ leadId, clientId }: { leadId?: string; clie
     <h3 className="font-semibold">Histórico de interações</h3>
     <form className="grid gap-2" onSubmit={async (e) => {
       e.preventDefault();
-      try { await add.mutateAsync({ lead_id: leadId, client_id: clientId, type, content }); setContent(""); } catch { /* toast */ }
+      try { await add.mutateAsync({ ...(leadId ? { lead_id: leadId } : {}), ...(clientId ? { client_id: clientId } : {}), type, content }); setContent(""); } catch { /* toast */ }
     }}>
       <Label>Tipo de interação</Label>
       <Select value={type} onValueChange={setType}><SelectTrigger aria-label="Tipo de interação"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(INTERACTION_TYPES).map(([k,v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>

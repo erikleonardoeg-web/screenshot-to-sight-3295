@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/recuperar-senha")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Recuperar senha — LeadZap" },
       { name: "description", content: "Receba um link para redefinir sua senha do LeadZap." },
       { property: "og:title", content: "Recuperar senha — LeadZap" },

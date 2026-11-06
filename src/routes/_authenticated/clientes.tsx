@@ -24,7 +24,7 @@ import { useLeads } from "@/lib/leads";
 import { memberName, useMembers } from "@/hooks/use-members";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
-  head: () => ({ meta: [{ title: "Clientes — LeadZap" }, { name: "description", content: "Clientes convertidos e histórico." }] }),
+  head: () => ({ meta: [{ title: "Clientes — LeadZap" }, { name: "description", content: "Clientes convertidos e histórico." }, { property: "og:title", content: "Clientes — LeadZap" }, { property: "og:description", content: "Clientes convertidos e histórico." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ClientsPage,
 });
 
@@ -120,7 +120,7 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
     const f = new FormData(e.currentTarget);
     const invalid = contactError(str(f.get("phone")),str(f.get("email")));
     if (invalid) { toast.error(invalid); return; }
-    if (!String(f.get("name")).trim()) { toast.error("Informe o nome do cliente."); return; }
+    if ((client || leadId === NONE) && !str(f.get("name"))) { toast.error("Informe o nome do cliente."); return; }
     try {
     if (!client && leadId !== NONE) {
       setConverting(true);
@@ -155,6 +155,7 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
               </Select>
             </div>
           )}
+          <fieldset className="grid gap-4" disabled={!client && leadId !== NONE}>
           <div className="space-y-1.5"><Label htmlFor="name">Nome *</Label><Input id="name" name="name" required maxLength={200} defaultValue={client?.name ?? lead?.name ?? ""} /></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5"><Label htmlFor="phone">Telefone</Label><Input id="phone" name="phone" defaultValue={client?.phone ?? lead?.phone ?? ""} /></div>
@@ -163,6 +164,7 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
           <div className="space-y-1.5"><Label>Responsável</Label><MemberSelect value={owner} onChange={setOwner} /></div>
           <div className="space-y-1.5"><Label htmlFor="address">Endereço</Label><Input id="address" name="address" defaultValue={client?.address ?? ""} /></div>
           <div className="space-y-1.5"><Label htmlFor="notes">Observações</Label><Textarea id="notes" name="notes" rows={3} defaultValue={client?.notes ?? ""} /></div>
+          </fieldset>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={save.isPending || converting}>{save.isPending || converting ? <Spinner label="Salvando" /> : !client && leadId !== NONE ? "Converter lead" : "Salvar"}</Button>

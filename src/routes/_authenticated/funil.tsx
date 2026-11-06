@@ -15,7 +15,7 @@ import { memberName, useMembers } from "@/hooks/use-members";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/funil")({
-  head: () => ({ meta: [{ title: "Funil de vendas — LeadZap" }, { name: "description", content: "Quadro Kanban das etapas comerciais." }] }),
+  head: () => ({ meta: [{ title: "Funil de vendas — LeadZap" }, { name: "description", content: "Quadro Kanban das etapas comerciais." }, { property: "og:title", content: "Funil de vendas — LeadZap" }, { property: "og:description", content: "Quadro Kanban das etapas comerciais." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: FunnelPage,
 });
 

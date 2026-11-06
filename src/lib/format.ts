@@ -1,13 +1,7 @@
 // Constantes e formatadores do CRM.
 
-export type LeadStage =
-  | "novo"
-  | "primeiro_contato"
-  | "negociacao"
-  | "orcamento_enviado"
-  | "venda_concluida"
-  | "venda_perdida"
-  | `custom_${string}`;
+import type { Database } from "@/integrations/supabase/types";
+export type LeadStage = Database["public"]["Enums"]["lead_stage"];
 
 export const STAGES: { key: LeadStage; name: string }[] = [
   { key: "novo", name: "Novo lead" },

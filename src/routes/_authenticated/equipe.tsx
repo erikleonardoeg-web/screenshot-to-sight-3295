@@ -20,7 +20,7 @@ import { dateBR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/equipe")({
-  head: () => ({ meta: [{ title: "Equipe — LeadZap" }, { name: "description", content: "Funcionários e permissões." }] }),
+  head: () => ({ meta: [{ title: "Equipe — LeadZap" }, { name: "description", content: "Funcionários e permissões." }, { property: "og:title", content: "Equipe — LeadZap" }, { property: "og:description", content: "Funcionários e permissões." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TeamPage,
 });
 
@@ -118,7 +118,8 @@ function InvitesPanel({ orgId, open, onOpenChange }: { orgId: string | undefined
   const { data: invites = [] } = useQuery({
     queryKey: ["invites", orgId], enabled: !!orgId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("organization_invites").select("*").eq("organization_id", orgId!).eq("status", "pending").order("created_at", { ascending: false });
+      if (!orgId) return [];
+      const { data, error } = await supabase.from("organization_invites").select("*").eq("organization_id", orgId).eq("status", "pending").order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -126,7 +127,8 @@ function InvitesPanel({ orgId, open, onOpenChange }: { orgId: string | undefined
   const create = useMutation({
     mutationFn: async (email: string) => {
       const { data: u } = await supabase.auth.getUser();
-      const { error } = await supabase.from("organization_invites").insert({ organization_id: orgId!, email: email.toLowerCase(), role, invited_by: u.user!.id });
+      if (!orgId || !u.user) throw new Error("Entre novamente para registrar o convite.");
+      const { error } = await supabase.from("organization_invites").insert({ organization_id: orgId, email: email.toLowerCase(), role, invited_by: u.user.id });
       if (error) throw new Error(error.code === "23505" ? "Já existe um convite pendente para este e-mail." : error.message);
     },
     onSuccess: () => { toast.success("Convite registrado."); qc.invalidateQueries({ queryKey: ["invites"] }); onOpenChange(false); },
