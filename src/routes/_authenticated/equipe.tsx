@@ -20,7 +20,7 @@ import { dateBR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/equipe")({
-  head: () => ({ meta: [{ title: "Equipe — LeadZap" }, { name: "description", content: "Funcionários e permissões." }] }),
+  head: () => ({ meta: [{ title: "Equipe — LeadZap" }, { name: "description", content: "Funcionários e permissões." }, { property: "og:title", content: "Equipe — LeadZap" }, { property: "og:description", content: "Funcionários e permissões." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TeamPage,
 });
 

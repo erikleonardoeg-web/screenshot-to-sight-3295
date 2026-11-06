@@ -7,6 +7,8 @@ import { PLANS, TRIAL_DAYS, formatPlanPrice } from "@/lib/plans";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "LeadZap — CRM para prestadores de serviços" },
       { name: "description", content: "Organize seus clientes, acompanhe seus orçamentos e transforme oportunidades em vendas." },
       { property: "og:title", content: "LeadZap — CRM para prestadores de serviços" },

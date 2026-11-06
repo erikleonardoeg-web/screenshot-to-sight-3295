@@ -16,7 +16,7 @@ import { currentOrgQuery, useCurrentOrg } from "@/hooks/use-organization";
 import { PLANS, TRIAL_DAYS, formatPlanPrice } from "@/lib/plans";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
-  head: () => ({ meta: [{ title: "Configurações — LeadZap" }, { name: "description", content: "Dados da empresa, perfil e conta." }] }),
+  head: () => ({ meta: [{ title: "Configurações — LeadZap" }, { name: "description", content: "Dados da empresa, perfil e conta." }, { property: "og:title", content: "Configurações — LeadZap" }, { property: "og:description", content: "Dados da empresa, perfil e conta." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: SettingsPage,
 });
 

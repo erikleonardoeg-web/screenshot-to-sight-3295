@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { title: "Criar conta — LeadZap" },
       { name: "description", content: "Cadastre sua empresa no LeadZap e organize seus leads e orçamentos." },
       { property: "og:title", content: "Criar conta — LeadZap" },

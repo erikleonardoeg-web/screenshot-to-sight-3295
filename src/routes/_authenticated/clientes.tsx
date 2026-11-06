@@ -24,7 +24,7 @@ import { useLeads } from "@/lib/leads";
 import { memberName, useMembers } from "@/hooks/use-members";
 
 export const Route = createFileRoute("/_authenticated/clientes")({
-  head: () => ({ meta: [{ title: "Clientes — LeadZap" }, { name: "description", content: "Clientes convertidos e histórico." }] }),
+  head: () => ({ meta: [{ title: "Clientes — LeadZap" }, { name: "description", content: "Clientes convertidos e histórico." }, { property: "og:title", content: "Clientes — LeadZap" }, { property: "og:description", content: "Clientes convertidos e histórico." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: ClientsPage,
 });
 

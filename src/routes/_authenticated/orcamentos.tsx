@@ -18,7 +18,7 @@ import { BUDGET_STATUS, parseMoney, str, useOrgRows, useSaveRow, type Budget } f
 import { memberName, useMembers } from "@/hooks/use-members";
 
 export const Route = createFileRoute("/_authenticated/orcamentos")({
-  head: () => ({ meta: [{ title: "Orçamentos — LeadZap" }, { name: "description", content: "Orçamentos enviados aos clientes." }] }),
+  head: () => ({ meta: [{ title: "Orçamentos — LeadZap" }, { name: "description", content: "Orçamentos enviados aos clientes." }, { property: "og:title", content: "Orçamentos — LeadZap" }, { property: "og:description", content: "Orçamentos enviados aos clientes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: BudgetsPage,
 });
 

@@ -22,7 +22,7 @@ import { memberName, useMembers } from "@/hooks/use-members";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/tarefas")({
-  head: () => ({ meta: [{ title: "Tarefas — LeadZap" }, { name: "description", content: "Lembretes, contatos e prazos." }] }),
+  head: () => ({ meta: [{ title: "Tarefas — LeadZap" }, { name: "description", content: "Lembretes, contatos e prazos." }, { property: "og:title", content: "Tarefas — LeadZap" }, { property: "og:description", content: "Lembretes, contatos e prazos." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: TasksPage,
 });
 

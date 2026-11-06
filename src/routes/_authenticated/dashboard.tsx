@@ -15,7 +15,7 @@ import { useOrgRows } from "@/lib/crm";
 import { memberName, useMembers } from "@/hooks/use-members";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — LeadZap" }, { name: "description", content: "Visão geral dos seus leads e vendas." }] }),
+  head: () => ({ meta: [{ title: "Dashboard — LeadZap" }, { name: "description", content: "Visão geral dos seus leads e vendas." }, { property: "og:title", content: "Dashboard — LeadZap" }, { property: "og:description", content: "Visão geral dos seus leads e vendas." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: Dashboard,
 });
 

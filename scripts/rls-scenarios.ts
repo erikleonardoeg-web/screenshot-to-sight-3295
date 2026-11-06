@@ -45,6 +45,29 @@ try {
   const asg = await A.c.from("leads").update({ assigned_to: B.id }).eq("id", leadA);
   check("G: Responsável precisa ser membro da empresa", !!asg.error, asg.error?.message);
 
+  const conv = await A.c.rpc("convert_lead_to_client", { _lead: leadA });
+  check("H: Conversão cria cliente", !!conv.data && !conv.error, conv.error?.message);
+  const retry = await A.c.rpc("convert_lead_to_client", { _lead: leadA });
+  check("H: Conversão repetida não duplica", retry.data === conv.data && !!conv.data);
+  const converted = await A.c.from("leads").select("stage").eq("id",leadA).single();
+  check("H: Conversão atualiza stage para venda concluída", converted.data?.stage === "venda_concluida");
+  const foreignConversion = await A.c.rpc("convert_lead_to_client", {_lead:leadB});
+  check("H: Não converte lead de outra empresa", !!foreignConversion.error);
+  const wonStage = (await A.c.from("pipeline_stages").select("id").eq("key","venda_concluida").single()).data;
+  const removeUsed = await A.c.from("pipeline_stages").delete().eq("id",wonStage?.id ?? "");
+  check("I: Não remove etapa com leads", !!removeUsed.error);
+  const inactiveUsed = await A.c.from("pipeline_stages").update({active:false}).eq("id",wonStage?.id ?? "");
+  check("I: Não desativa etapa com leads", !!inactiveUsed.error);
+  const doubleMarker = await A.c.from("pipeline_stages").update({is_won:true,is_lost:true}).eq("id",wonStage?.id ?? "");
+  check("I: Etapa não pode ser ganha e perdida", !!doubleMarker.error);
+  const custom = await A.c.from("pipeline_stages").insert({organization_id:orgA,key:"custom_01",name:"Visita técnica",position:7}).select("id").single();
+  check("I: Proprietário cria etapa adicional", !!custom.data && !custom.error,custom.error?.message);
+  const moveCustom = await A.c.from("leads").update({stage:"custom_01"}).eq("id",leadA);
+  check("I: Lead pode ir para etapa adicional", !moveCustom.error);
+  const interaction = await A.c.from("interactions").insert({organization_id:orgA,lead_id:leadA,type:"nota",content:"Teste de histórico"});
+  check("J: Registra interação real", !interaction.error);
+  const foreignInteraction = await A.c.from("interactions").insert({organization_id:orgA,lead_id:leadB,type:"nota",content:"invasão"});
+  check("J: Histórico não vincula lead de outra empresa", !!foreignInteraction.error);
   // Team: invite employee E to A
   const Eemail = `rls-emp-${stamp}@example.com`;
   const inv = await A.c.from("organization_invites").insert({ organization_id: orgA, email: Eemail, role: "member" });
@@ -55,6 +78,12 @@ try {
   const acc = await E.rpc("accept_pending_invites");
   check("C: Convite aceito associa funcionário", acc.data === 1, acc.error?.message);
   const empRow = (await E.from("organization_members").select("id, role").eq("user_id", eu.user!.id).single()).data!;
+  const empCreate = await E.from("leads").insert({organization_id:orgA,name:"Lead funcionário"}).select("id").single();
+  check("K: Funcionário cria lead", !!empCreate.data && !empCreate.error);
+  const empDelete = await E.from("leads").delete().eq("id",empCreate.data?.id ?? "").select("id");
+  check("K: Funcionário não exclui lead", (empDelete.data ?? []).length === 0);
+  const empStages = await E.from("pipeline_stages").insert({organization_id:orgA,key:"custom_02",name:"Etapa inválida",position:8});
+  check("K: Funcionário não configura etapas", !!empStages.error);
   // F
   const self = await E.from("organization_members").update({ role: "admin" }).eq("id", empRow.id).select("id");
   check("F: Funcionário não se promove a administrador", (self.data ?? []).length === 0);
@@ -70,10 +99,16 @@ try {
   // C
   const promote = await A.c.from("organization_members").update({ role: "admin" }).eq("id", empRow.id).select("id");
   check("C: Dono promove funcionário", (promote.data ?? []).length === 1, promote.error?.message);
+  const adminCreate = await E.from("pipeline_stages").insert({organization_id:orgA,key:"custom_02",name:"Etapa admin",position:8}).select("id").single();
+  check("K: Administrador configura etapas", !!adminCreate.data && !adminCreate.error);
   const deact = await A.c.from("organization_members").update({ active: false }).eq("id", empRow.id).select("id");
   check("C: Dono desativa funcionário", (deact.data ?? []).length === 1);
   const after = (await E.from("leads").select("id")).data ?? [];
   check("C: Funcionário desativado perde acesso", after.length === 0);
+  const inactiveWrite = await E.from("leads").insert({organization_id:orgA,name:"bloqueado"});
+  check("K: Desativado não cria dados", !!inactiveWrite.error);
+  const inactiveConvert = await E.rpc("convert_lead_to_client", {_lead:leadA});
+  check("K: Desativado não converte leads", !!inactiveConvert.error);
   const toOwner = await A.c.from("organization_members").update({ role: "owner" }).eq("id", empRow.id).select("id");
   check("F: Ninguém concede papel de proprietário", (toOwner.data ?? []).length === 0);
 } finally {
@@ -84,3 +119,5 @@ try {
   }
 }
 for (const [n, ok, i] of results) console.log(ok ? "PASS" : "FAIL", n, ok ? "" : i);
+
+if (results.some(([,ok]) => !ok)) process.exitCode = 1;
