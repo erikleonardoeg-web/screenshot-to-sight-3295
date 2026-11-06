@@ -120,7 +120,7 @@ function ClientForm({ client, onClose }: { client: Client | null; onClose: () =>
     const f = new FormData(e.currentTarget);
     const invalid = contactError(str(f.get("phone")),str(f.get("email")));
     if (invalid) { toast.error(invalid); return; }
-    if (!String(f.get("name")).trim()) { toast.error("Informe o nome do cliente."); return; }
+    if ((client || leadId === NONE) && !str(f.get("name"))) { toast.error("Informe o nome do cliente."); return; }
     try {
     if (!client && leadId !== NONE) {
       setConverting(true);
