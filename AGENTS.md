@@ -18,3 +18,6 @@
 - Cross-org integrity is enforced in DB by `enforce_same_org` triggers (linked lead/client/assignee must belong to the row's org; organization_id immutable); audit rows are written by `write_audit` triggers. Why: never trust client-sent IDs.
 - Security scenarios live in `scripts/rls-scenarios.ts` (run with bun; creates and deletes temporary users). Re-run after any RLS/trigger change.
 - Signed-in pages live under `src/routes/_authenticated/` and render inside `AppShell` (sidebar + top bar).
+- Pipeline UI reads organization-scoped `pipeline_stages`; stage keys remain enum-backed with reserved custom slots to preserve the existing `leads.stage` contract. Lifecycle and admin validation run in database triggers without weakening RLS.
+- Lead conversion uses the security-invoker `convert_lead_to_client` RPC with a lead row lock and existing unique link; related records are linked in one transaction to avoid duplicates and partial conversion.
+- CRM contact, money, overdue and dashboard calculations are shared pure functions with rule tests; details share interaction history and official WhatsApp links.
